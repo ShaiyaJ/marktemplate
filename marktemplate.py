@@ -1,24 +1,61 @@
 from xml.dom import minidom
 import sys
+import glob
 
-
-def process_node(target: minidom.Node) -> minidom.Node:
+def process_node(target: minidom.Node):
     """Processes a single node"""
 
     if target.nodeType == minidom.Node.ELEMENT_NODE:
-        match (target.tagName):
+        match (target.tagName): # TODO: make includes search for closest src
+                                    # TODO: make .closest and refactor code
+                                    # TODO: make process_children and refactor code
             case "mt-raw-include":
                 src = target.getAttribute("src")
                 target.parentNode.replaceChild(minidom.parse(src).documentElement, target)
+                
+                
+            case "mt-text-include":
+                src = target.getAttribute("src")
+                
+                with open(src, "r") as file:
+                    value = file.read()
+                    file.close()
+                    
+                target.parentNode.replaceChild(minidom.Document().createTextNode(value), target)
                     
                     
             case "mt-include":
                 src = target.getAttribute("src")
 
                 root = minidom.parse(src).documentElement
-                target.parentNode.replaceChild(root, target)
+                
+                target.appendChild(root)                        # Append as child so <mt-attr> works when the attribute is on the mt-include tag
                 process_node(root)
+                
+                target.parentNode.replaceChild(root, target)    # Replace the target with root - effectively deleting target and moving it's child up
+                return                                          # Root node has already been processed, so we don't need to run the final for loop
+                        
+                            
+            case "mt-glob":
+                src = target.getAttribute("src")
+                
+                files = glob.glob(src)
+                
+                for file in files:
+                    clone = target.cloneNode(True)
                     
+                    for child in clone.childNodes:
+                        if child.nodeType != minidom.Node.ELEMENT_NODE:
+                            continue
+                    
+                        child.setAttribute("src", file)
+                        node = target.parentNode.insertBefore(child, target)
+                    
+                        process_node(node)
+                        
+                target.parentNode.removeChild(target)
+                return
+
 
             case "mt-attr":
                 attr = target.getAttribute("name")
