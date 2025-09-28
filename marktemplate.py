@@ -2,20 +2,36 @@ from xml.dom import minidom
 import sys
 import glob
 
+
+def closest(node, attr):
+    """Finds the closest parent that has an attribute"""
+
+    current = node
+
+    while True:
+        current_attr = current.getAttribute(attr)       
+        
+        if attr != "":
+            return current_attr
+
+        # If the attribute is empty set current to parent
+        current = current.parentNode
+
+
+
 def process_node(target: minidom.Node):
     """Processes a single node"""
 
+    # If it's an element node then it is possible that it is one of the mt-* elements
     if target.nodeType == minidom.Node.ELEMENT_NODE:
-        match (target.tagName): # TODO: make includes search for closest src
-                                    # TODO: make .closest and refactor code
-                                    # TODO: make process_children and refactor code
-            case "mt-raw-include":
-                src = target.getAttribute("src")
+        match target.tagName:
+            case "mt-raw-include":                              # Including raw file contents
+                src = closest(target, "src")
                 target.parentNode.replaceChild(minidom.parse(src).documentElement, target)
                 
                 
-            case "mt-text-include":
-                src = target.getAttribute("src")
+            case "mt-text-include":                             # Including raw file contents as text
+                src = closest(target, "src")
                 
                 with open(src, "r") as file:
                     value = file.read()
@@ -24,8 +40,8 @@ def process_node(target: minidom.Node):
                 target.parentNode.replaceChild(minidom.Document().createTextNode(value), target)
                     
                     
-            case "mt-include":
-                src = target.getAttribute("src")
+            case "mt-include":                                  # Including file contents - processing it as apart of the DOM
+                src = closest(target, "src")
 
                 root = minidom.parse(src).documentElement
                 
@@ -36,7 +52,7 @@ def process_node(target: minidom.Node):
                 return                                          # Root node has already been processed, so we don't need to run the final for loop
                         
                             
-            case "mt-glob":
+            case "mt-glob":                                     # Running a glob - for each file it copies the children and sets the src attribute
                 src = target.getAttribute("src")
                 
                 files = glob.glob(src)
@@ -54,20 +70,15 @@ def process_node(target: minidom.Node):
                         process_node(node)
                         
                 target.parentNode.removeChild(target)
-                return
+                return                                          # Root node has already been processed, so we don't need to run the final for loop
 
 
-            case "mt-attr":
-                attr = target.getAttribute("name")
-                parent = target
-                    
-                while (parent.getAttribute(attr) == ""):
-                    parent = parent.parentNode
-                        
-                value = parent.getAttribute(attr)
+            case "mt-attr":                                     # Displays the result of an attribute
+                value = closest(target, "name")
                 target.parentNode.replaceChild(minidom.Document().createTextNode(value), target)
 
 
+    # Otherwise, process the children - which might be mt-* elements
     for child in target.childNodes:
         process_node(child)
 
@@ -82,6 +93,7 @@ def processFile(path: str, encoding: str = "utf8") -> str:
 
     # Stringify and return
     return doc.documentElement.toxml()
+
 
 
 # Main
