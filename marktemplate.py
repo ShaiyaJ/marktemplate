@@ -78,6 +78,21 @@ def process_node(target: minidom.Node):
                 target.parentNode.replaceChild(minidom.Document().createTextNode(value), target)
 
 
+            case "mt-for":
+                start = target.getAttribute("start")
+                stop = target.getAttribute("stop")
+                step = target.getAttribute("step")
+                name = target.getAttribute("name")
+
+                if name == "":
+                    name = "i"
+
+                for i in range(start, stop, step):
+                    target.setAttribute(name, i);
+
+                    process_node(target)
+
+
     # Otherwise, process the children - which might be mt-* elements
     for child in target.childNodes:
         process_node(child)
