@@ -100,7 +100,7 @@ def process_node(target: minidom.Node):
 
 
 def processFile(path: str, encoding: str = "utf8") -> str:
-    """Processes a single marktemplate file into a static html file"""
+    """Processes a single marktemplate file into a static html string"""
 
     # Process root node
     doc = minidom.parse(path)
@@ -109,6 +109,17 @@ def processFile(path: str, encoding: str = "utf8") -> str:
     # Stringify and return
     return doc.documentElement.toxml()
 
+
+
+def processRaw(raw: str) -> str:
+    """Processes a parsed raw string into a static html string"""
+
+    # Process root node
+    doc = minidom.parseString(raw)
+    process_node(doc.documentElement)
+
+    # Stringify and return
+    return doc.documentElement.toxml()
 
 
 # Main

@@ -1,9 +1,0 @@
-<!DOCTYPE html>
-<html title="test">
-    <head>
-        <title><mt-attr name="title" /></title>
-    </head>
-
-    
-    <mt-include src="./test.mt" message="hi" />
-</html>
