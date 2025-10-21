@@ -6,16 +6,12 @@ import glob
 def closest(node, attr):
     """Finds the closest parent that has an attribute"""
 
-    current = node
+    current_attr = node.getAttribute(attr)       
+    
+    if current_attr != "":
+        return current_attr
 
-    while True:
-        current_attr = current.getAttribute(attr)       
-        
-        if attr != "":
-            return current_attr
-
-        # If the attribute is empty set current to parent
-        current = current.parentNode
+    return closest(node.parentNode, attr)
 
 
 
@@ -74,23 +70,30 @@ def process_node(target: minidom.Node):
 
 
             case "mt-attr":                                     # Displays the result of an attribute
-                value = closest(target, "name")
-                target.parentNode.replaceChild(minidom.Document().createTextNode(value), target)
+                target_attr = target.getAttribute("name")
+                value = closest(target, target_attr)
+
+                text_node = minidom.Document().createTextNode(value)
+
+                target.parentNode.replaceChild(text_node, target)
 
 
             case "mt-for":
-                start = target.getAttribute("start")
-                stop = target.getAttribute("stop")
-                step = target.getAttribute("step")
+                start = int( target.getAttribute("start") )
+                stop = int( target.getAttribute("stop") )
+                step = int( target.getAttribute("step") )
                 name = target.getAttribute("name")
 
                 if name == "":
                     name = "i"
 
                 for i in range(start, stop, step):
-                    target.setAttribute(name, i);
+                    target.setAttribute(name, i)
 
-                    process_node(target)
+                    for child in target.childNodes:
+                        process_node(child)
+
+                    return
 
 
     # Otherwise, process the children - which might be mt-* elements
