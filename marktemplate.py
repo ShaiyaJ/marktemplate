@@ -15,114 +15,93 @@ def closest(node, attr):
 
 
 
-def process_node(target: minidom.Node):
-    """Processes a single node"""
-
-    # If it's an element node then it is possible that it is one of the mt-* elements
+def process_node(target: minidom.Node) -> minidom.Node | list[minidom.Node]:
     if target.nodeType == minidom.Node.ELEMENT_NODE:
         match target.tagName:
-            case "mt-raw-include":                              # Including raw file contents
-                src = closest(target, "src")
-                target.parentNode.replaceChild(minidom.parse(src).documentElement, target)
-                
-                
-            case "mt-text-include":                             # Including raw file contents as text
-                src = closest(target, "src")
-                
-                with open(src, "r") as file:
-                    value = file.read()
-                    file.close()
-                    
-                target.parentNode.replaceChild(minidom.Document().createTextNode(value), target)
-                    
-                    
-            case "mt-include":                                  # Including file contents - processing it as apart of the DOM
-                src = closest(target, "src")
+            case "mt-attr":
+                name = target.getAttribute("name")
+                value = closest(target, name)
 
-                root = minidom.parse(src).documentElement
-                
-                target.appendChild(root)                        # Append as child so <mt-attr> works when the attribute is on the mt-include tag
-                process_node(root)
-                
-                target.parentNode.replaceChild(root, target)    # Replace the target with root - effectively deleting target and moving it's child up
-                return                                          # Root node has already been processed, so we don't need to run the final for loop
-                        
-                            
-            case "mt-glob":                                     # Running a glob - for each file it copies the children and sets the src attribute
-                src = target.getAttribute("src")
-                
-                files = glob.glob(src)
-                
-                for file in files:
-                    clone = target.cloneNode(True)
-                    
-                    for child in clone.childNodes:
-                        if child.nodeType != minidom.Node.ELEMENT_NODE:
-                            continue
-                    
-                        child.setAttribute("src", file)
-                        node = target.parentNode.insertBefore(child, target)
-                    
-                        process_node(node)
-                        
-                target.parentNode.removeChild(target)
-                return                                          # Root node has already been processed, so we don't need to run the final for loop
-
-
-            case "mt-attr":                                     # Displays the result of an attribute
-                target_attr = target.getAttribute("name")
-                value = closest(target, target_attr)
-
-                text_node = minidom.Document().createTextNode(value)
-
-                target.parentNode.replaceChild(text_node, target)
-
+                return minidom.Document().createTextNode(value)
 
             case "mt-for":
-                start = int( target.getAttribute("start") )
-                stop = int( target.getAttribute("stop") )
-                step = int( target.getAttribute("step") )
+                # Name attribute is optional
                 name = target.getAttribute("name")
 
                 if name == "":
                     name = "i"
 
+                # start and stop is mandatory
+                start = int( target.getAttribute("start") )
+                stop = int( target.getAttribute("stop") )
+
+                # Step attribute is optional
+                step = target.getAttribute("step")
+
+                if step == "":
+                    step = 1
+                else:
+                    step = int(step)
+
+                unrolled_children = []
+
+                # For each integer in the range specified
                 for i in range(start, stop, step):
-                    target.setAttribute(name, i)
+                    # Build an array of unaltered childeren
+                    children = [child for child in target.childNodes]
 
-                    for child in target.childNodes:
-                        process_node(child)
+                    # Set the attribute to i then overwrite it in the children array with the processed varient
+                    for j, child in enumerate(children):
+                        if child.nodeType == minidom.Node.ELEMENT_NODE:
+                            child.setAttribute(name, str(i))
+                        children[j] = process_node(child)
 
-                    return
+                    # Concat to unrolled_children (result array)
+                    unrolled_children = unrolled_children + children    # TODO: check for memory issues, allocates a new list?
+                    
 
+                return unrolled_children
 
-    # Otherwise, process the children - which might be mt-* elements
+            case "mt-glob":
+                pass
+            case "mt-include":
+                pass
+            case "mt-raw-include":
+                pass
+            case "mt-text-include":
+                pass
+
+    # Create clone node 
+    clone = target.cloneNode(False)
+
+    # For each child, append the processed node
     for child in target.childNodes:
-        process_node(child)
+        processed = process_node(child)
 
+        if isinstance(processed, list):             # Tags like for can return multiple children
+            for processed_child in processed:
+                clone.appendChild(processed_child)
+        else:
+            clone.appendChild(process_node(child))
+
+    return clone
 
 
 def processFile(path: str, encoding: str = "utf8") -> str:
     """Processes a single marktemplate file into a static html string"""
 
     # Process root node
-    doc = minidom.parse(path)
-    process_node(doc.documentElement)
-
-    # Stringify and return
-    return doc.documentElement.toxml()
-
+    src = minidom.parse(path)
+    return process_node(src.documentElement).toxml()
 
 
 def processRaw(raw: str) -> str:
     """Processes a parsed raw string into a static html string"""
 
     # Process root node
-    doc = minidom.parseString(raw)
-    process_node(doc.documentElement)
+    src = minidom.parseString(raw)
 
-    # Stringify and return
-    return doc.documentElement.toxml()
+    return process_node(src.documentElement).toxml()
 
 
 # Main

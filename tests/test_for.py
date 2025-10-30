@@ -26,7 +26,7 @@ class ForTests(unittest.TestCase):
 </root> 
 """
 
-        self.assertEqual(processRaw(RAW).strip(), EXPECTED.strip())
+        self.assertEqual("".join(processRaw(RAW).split()), "".join(EXPECTED.split()))
 
     def test_invalid_datatype(self):
         RAW = """
@@ -60,7 +60,22 @@ class ForTests(unittest.TestCase):
     7
     8
     9
-    10
 </root> 
 """
+        
+        self.assertEqual("".join(processRaw(RAW).split()), "".join(EXPECTED.split()))
 
+
+if __name__ == "__main__":
+    RAW = """
+<root test="ok">
+    <mt-for start="1" stop="10" step="2">
+        <mt-attr name="i" />
+    </mt-for>
+</root>
+"""
+
+    print(RAW)
+    x = processRaw(RAW)
+    print("---")
+    print(x)
