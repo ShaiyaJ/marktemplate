@@ -15,7 +15,7 @@ def closest(node, attr):
 
 
 
-def process_node(target: minidom.Node) -> minidom.Node:
+def process_node(target: minidom.Node) -> minidom.Node | list[minidom.Node]:
     if target.nodeType == minidom.Node.ELEMENT_NODE:
         match target.tagName:
             case "mt-attr":
@@ -25,7 +25,43 @@ def process_node(target: minidom.Node) -> minidom.Node:
                 return minidom.Document().createTextNode(value)
 
             case "mt-for":
-                pass
+                # Name attribute is optional
+                name = target.getAttribute("name")
+
+                if name == "":
+                    name = "i"
+
+                # start and stop is mandatory
+                start = int( target.getAttribute("start") )
+                stop = int( target.getAttribute("stop") )
+
+                # Step attribute is optional
+                step = target.getAttribute("step")
+
+                if step == "":
+                    step = 1
+                else:
+                    step = int(step)
+
+                unrolled_children = []
+
+                # For each integer in the range specified
+                for i in range(start, stop, step):
+                    # Build an array of unaltered childeren
+                    children = [child for child in target.childNodes]
+
+                    # Set the attribute to i then overwrite it in the children array with the processed varient
+                    for j, child in enumerate(children):
+                        if child.nodeType == minidom.Node.ELEMENT_NODE:
+                            child.setAttribute(name, str(i))
+                        children[j] = process_node(child)
+
+                    # Concat to unrolled_children (result array)
+                    unrolled_children = unrolled_children + children    # TODO: check for memory issues, allocates a new list?
+                    
+
+                return unrolled_children
+
             case "mt-glob":
                 pass
             case "mt-include":
@@ -38,8 +74,15 @@ def process_node(target: minidom.Node) -> minidom.Node:
     # Create clone node 
     clone = target.cloneNode(False)
 
+    # For each child, append the processed node
     for child in target.childNodes:
-        clone.appendChild(process_node(child))
+        processed = process_node(child)
+
+        if isinstance(processed, list):             # Tags like for can return multiple children
+            for processed_child in processed:
+                clone.appendChild(processed_child)
+        else:
+            clone.appendChild(process_node(child))
 
     return clone
 
@@ -57,6 +100,7 @@ def processRaw(raw: str) -> str:
 
     # Process root node
     src = minidom.parseString(raw)
+
     return process_node(src.documentElement).toxml()
 
 
