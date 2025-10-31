@@ -145,13 +145,26 @@ def processRaw(raw: str) -> str:
 
 
 # Main
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Error: no target file provided", file=sys.stderr);
-        sys.exit(1);
-        
-    target = sys.argv[1];
+HELP = """Marktemplate use:
+    marktemplate { [input_path output_path] | [raw] }"""
 
-    # Process file
-    print(processFile(target))
-    
+if __name__ == "__main__":
+    if len(sys.argv) == 1:   # There are no arguments
+        print(f"Error: no target file/string provided\n{HELP}", file=sys.stderr)
+        sys.exit(1)
+
+    elif len(sys.argv) == 2: # Raw text provided
+        print(processRaw(sys.argv[1]))
+        
+    elif len(sys.argv) == 3:
+        src = sys.argv[1]
+        dest = sys.argv[2]
+
+        with open(dest, "w") as file:
+            file.write(processFile(src))
+            file.close()
+
+    else:                       # Too many args
+        print(f"Error: too many arguments\n{HELP}", file=sys.stderr)
+        sys.exit(1)
+
