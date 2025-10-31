@@ -58,18 +58,47 @@ def process_node(target: minidom.Node) -> minidom.Node | list[minidom.Node]:
 
                     # Concat to unrolled_children (result array)
                     unrolled_children = unrolled_children + children    # TODO: check for memory issues, allocates a new list?
-                    
 
                 return unrolled_children
 
             case "mt-glob":
-                pass
+                src = target.getAttribute("src")
+                files = glob.glob(src)
+
+                # For each file, create a clone of target and set all the children's src attribute to the file path
+                children = [] 
+
+                for file in files:
+                    clone = target.cloneNode(True)
+
+                    for child in clone.childNodes:
+                        if child.nodeType == minidom.Node.ELEMENT_NODE:
+                            child.setAttribute("src", file)
+
+                        children.append(process_node(child))
+
+                return children
+
             case "mt-include":
-                pass
-            case "mt-raw-include":
-                pass
+                src = target.getAttribute("src")
+
+                with open(src, "r") as file:
+                    raw = file.read()
+                    file.close()
+
+                doc = minidom.parse(raw)            # TODO: check whether this contriants the file to needing a top level element
+
+                return process_node(doc.documentElement).toxml()
+
             case "mt-text-include":
-                pass
+                src = target.getAttribute("src")
+
+                with open(src, "r") as file:
+                    raw = file.read()
+                    file.close()
+
+                return minidom.Document().createTextNode(raw)
+
 
     # Create clone node 
     clone = target.cloneNode(False)
