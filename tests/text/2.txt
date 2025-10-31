@@ -1,0 +1,1 @@
+<root><div test="hi"><mt-attr name="test" /></div></root>

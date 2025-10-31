@@ -48,7 +48,8 @@ def process_node(target: minidom.Node) -> minidom.Node | list[minidom.Node]:
                 # For each integer in the range specified
                 for i in range(start, stop, step):
                     # Build an array of unaltered childeren
-                    children = [child for child in target.childNodes]
+                    clone = target.cloneNode(True)
+                    children = clone.childNodes
 
                     # Set the attribute to i then overwrite it in the children array with the processed varient
                     for j, child in enumerate(children):
@@ -86,11 +87,11 @@ def process_node(target: minidom.Node) -> minidom.Node | list[minidom.Node]:
                     raw = file.read()
                     file.close()
 
-                doc = minidom.parse(raw)            # TODO: check whether this contriants the file to needing a top level element
+                doc = minidom.parseString(raw)
 
-                return process_node(doc.documentElement).toxml()
+                return process_node(doc.documentElement).childNodes
 
-            case "mt-text-include":
+            case "mt-raw-include":
                 src = target.getAttribute("src")
 
                 with open(src, "r") as file:
@@ -99,6 +100,16 @@ def process_node(target: minidom.Node) -> minidom.Node | list[minidom.Node]:
 
                 return minidom.Document().createTextNode(raw)
 
+            case "mt-text-include":
+                src = target.getAttribute("src")
+
+                with open(src, "r") as file:
+                    raw = file.read()
+                    file.close()
+
+                doc = minidom.parseString(raw)
+
+                return minidom.Document().createTextNode(process_node(doc.documentElement).toxml())
 
     # Create clone node 
     clone = target.cloneNode(False)
@@ -109,9 +120,9 @@ def process_node(target: minidom.Node) -> minidom.Node | list[minidom.Node]:
 
         if isinstance(processed, list):             # Tags like for can return multiple children
             for processed_child in processed:
-                clone.appendChild(processed_child)
+                clone.appendChild(processed_child.cloneNode(True))
         else:
-            clone.appendChild(process_node(child))
+            clone.appendChild(processed.cloneNode(True))
 
     return clone
 

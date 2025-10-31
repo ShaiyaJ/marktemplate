@@ -8,11 +8,11 @@ from marktemplate import processRaw
 import xml
 import html
 
-class TextIncludeTests(unittest.TestCase):
+class RawIncludeTests(unittest.TestCase):
     def test_include_nonexistent_path(self):
         RAW = """
 <root>
-    <mt-text-include src="./averylongpaththatwillneverexist" />
+    <mt-raw-include src="./averylongpaththatwillneverexist" />
 </root>
 """
 
@@ -22,23 +22,28 @@ class TextIncludeTests(unittest.TestCase):
     def test_include_text(self):
         RAW = """
 <root>
-    <mt-text-include src="./text/1.txt" />
-</root>
-"""
-
-        with self.assertRaises(xml.parsers.expat.ExpatError):
-            processRaw(RAW)
-
-    def test_include_mt_xml(self):
-        RAW = """
-<root>
-    <mt-text-include src="./text/2.txt" />
+    <mt-raw-include src="./text/1.txt" />
 </root>
 """
 
         EXPECTED = """
 <root>
-    &lt;root&gt;&lt;divtest="hi"&gt;hi&lt;/div&gt;&lt;/root&gt;
+    testtext
+</root>
+"""
+
+        self.assertEqual("".join(processRaw(RAW).split()), "".join(EXPECTED.split()))
+
+    def test_include_mt_xml(self):
+        RAW = """
+<root>
+    <mt-raw-include src="./text/2.txt" />
+</root>
+"""
+
+        EXPECTED = """
+<root>
+    &lt;root&gt;&lt;divtest="hi"&gt;&lt;mt-attrname="test"/&gt;&lt;/div&gt;&lt;/root&gt;
 </root>
 """
 
@@ -47,7 +52,7 @@ class TextIncludeTests(unittest.TestCase):
     def test_include_html(self):
         RAW = """
 <root>
-    <mt-text-include src="./text/3.text" />
+    <mt-raw-include src="./text/3.text" />
 </root>
 """
 
