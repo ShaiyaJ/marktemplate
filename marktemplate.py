@@ -66,6 +66,7 @@ def process_node(target: minidom.Node) -> minidom.Node | list[minidom.Node]:
                 src = target.getAttribute("src")
                 files = glob.glob(src)
 
+                # TODO: make recursion a setting?
                 # For each file, create a clone of target and set all the children's src attribute to the file path
                 children = [] 
 

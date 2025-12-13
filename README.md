@@ -34,7 +34,7 @@ Attr searches for an attribute and returns a text node containing the value of t
 <mt-attr name=[attribute_name] />
 ```
 
-**EXAMPLE ONE:**
+**EXAMPLE ONE: Fetching the value of x**
 ```xml
 <mt-attr x="value" name="x">
 ```
@@ -45,7 +45,7 @@ Produces:
 value
 ```
 
-**EXAMPLE TWO:**
+**EXAMPLE TWO: Fetching the value of x from muliple nested blocks away**
 ```xml
 <root x="y">
     <div>
@@ -65,12 +65,47 @@ Produces:
 ```
 
 ### mt-for
+For runs a for loop - copying the inner children of the for block each time, while also setting an attribute to the current iteration number.
+
+**EXAMPLE ONE: Running a basic for loop**
+```xml
+<root>
+    <mt-for start="0" stop="10">
+        <mt-attr name="i" />
+    </mt-for>
+</root>
+```
+
+Produces:
+
+```xml
+<root>
+    0
+    1
+    2   
+    3
+    4
+    5
+    6
+    7
+    8
+    9
+</root>
+```
+**EXAMPLE TWO: Specifying the step count**
+
+**EXAMPLE THREE: Specifying the variable count**
 
 ### mt-glob
+Glob searches for all files/directories that match a glob syntax
+
+**EXAMPLE**
 
 ### mt-include
+Include parses a file as xml, then processes it as mt - inserting the result into the DOM.
 
 ### mt-raw-include
+Raw include parses a file as xml, and inserts it into the DOM.
 
 ### mt-text-include
-
+Include reads a file and includes it as a text node in the DOM tree. This means it won't be evaluated.
