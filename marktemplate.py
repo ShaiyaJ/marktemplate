@@ -1,6 +1,8 @@
 from xml.dom import minidom
 import sys
+import os
 import glob
+import argparse
 
 
 def closest(node, attr):
@@ -150,22 +152,19 @@ HELP = """Marktemplate use:
     marktemplate { [input_path output_path] | [raw] }"""
 
 if __name__ == "__main__":
-    if len(sys.argv) == 1:   # There are no arguments
-        print(f"Error: no target file/string provided\n{HELP}", file=sys.stderr)
-        sys.exit(1)
+    parser = argparse.ArgumentParser(
+            prog="marktemplate",
+            description="An xml to xml preprocessor",
+            epilog="Shaiya J.")
 
-    elif len(sys.argv) == 2: # Raw text provided
-        print(processRaw(sys.argv[1]))
-        
-    elif len(sys.argv) == 3:
-        src = sys.argv[1]
-        dest = sys.argv[2]
+    parser.add_argument("input", nargs="?")
+    parser.add_argument("-o", "--output", nargs="?", default=os.getcwd() + "/out.xml")
 
-        with open(dest, "w") as file:
-            file.write(processFile(src))
+    args = parser.parse_args()
+
+    if (args.input):
+        with open(args.output, "w") as file:
+            file.write(processFile(args.input))
             file.close()
-
-    else:                       # Too many args
-        print(f"Error: too many arguments\n{HELP}", file=sys.stderr)
-        sys.exit(1)
-
+    else:
+        print(processRaw(input()))

@@ -101,11 +101,112 @@ Glob searches for all files/directories that match a glob syntax
 
 **EXAMPLE**
 
+```xml
+<root>
+    <mt-glob src="*.txt">
+        <file> <mt-attr name="src" /> </file>
+    </mt-glob>
+</root>
+```
+
+Produces:
+
+```xml
+<root>
+    <file>file1.txt</file>
+    <file>file2.txt</file>
+    <file>file3.txt</file>
+    ...
+</root>
+```
+
+
 ### mt-include
 Include parses a file as xml, then processes it as mt - inserting the result into the DOM.
+
+**EXAMPLE**
+
+Lets say we have a file called `sub.xml`:
+```xml
+<div x="5">
+    <mt-attr name="x"/>
+    <h1>Hello!</h1>
+</div>
+```
+
+Then: 
+
+```xml
+<root>
+    <mt-include src="./sub.xml" />
+</root>
+```
+
+Produces:
+
+```xml
+<root>
+    <div x="5">
+        5
+        <h1>Hello!</h1>
+    </div>
+</root>
+```
 
 ### mt-raw-include
 Raw include parses a file as xml, and inserts it into the DOM.
 
+**EXAMPLE**
+
+Lets say we have a file called `sub.xml`:
+```xml
+<div x="5">
+    <mt-attr name="x"/>
+    <h1>Hello!</h1>
+</div>
+```
+
+Then: 
+
+```xml
+<root>
+    <mt-include src="./sub.xml" />
+</root>
+```
+
+Produces:
+
+```xml
+<root>
+    #text "<div x="5">\n\t\t5\n\t\t<h1>Hello!</h1>\n\t</div>"
+</root>
+```
+
 ### mt-text-include
 Include reads a file and includes it as a text node in the DOM tree. This means it won't be evaluated.
+
+**EXAMPLE**
+
+Lets say we have a file called `sub.xml`:
+```xml
+<div x="5">
+    <mt-attr name="x"/>
+    <h1>Hello!</h1>
+</div>
+```
+
+Then: 
+
+```xml
+<root>
+    <mt-include src="./sub.xml" />
+</root>
+```
+
+Produces:
+
+```xml
+<root>
+    #text "<div x="5">\n\t\t<mt-attr name="x"/>\n\t\t<h1>Hello!</h1>\n\t</div>"
+</root>
+```
