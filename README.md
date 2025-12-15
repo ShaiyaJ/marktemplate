@@ -13,14 +13,14 @@ It is a very simple preprocessing library to learn and use.
 If you want to process a file, then you must provide a source and destination path 
 
 ```
-./marktemplate.py <src> <dest>
+./marktemplate.py <src> -o <dest>
 ```
 
 ### Evaluating raw text
-If you want to evaluate the result of some raw marktemplate string, you can do this by providing a single argument:
+If you want to evaluate the result of some raw marktemplate string, you can do this by providing no arguments and using `stdin`:
 
 ```
-./marktemplate.py <raw>
+echo "<root />" | ./marktemplate.py
 ```
 
 ## Writing marktemplate
